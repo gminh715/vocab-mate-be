@@ -101,8 +101,8 @@ async def list_users(
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     role: Annotated[UserRole | None, Query()] = None,
     user_status: Annotated[UserStatus | None, Query(alias="status")] = None,
-    search: Annotated[str | None, Query()] = None,
-) -> ResponseWithMeta[list[AdminUserDto], dict]:
+    search: Annotated[str | None, Query(alias="q")] = None,
+) -> BaseResponse[dict]:
     """Paginated user directory listing with search and role/status filtering.
 
     Args:
@@ -112,10 +112,10 @@ async def list_users(
         limit (int, optional): Maximum items per page. Defaults to 20.
         role (UserRole | None, optional): Filter by account role. Defaults to None.
         user_status (UserStatus | None, optional): Filter by account status. Defaults to None.
-        search (str | None, optional): Substring search over email and display name. Defaults to None.
+        search (str | None, optional): Substring search over email and display name (alias: q). Defaults to None.
 
     Returns:
-        ResponseWithMeta[list[AdminUserDto], dict]: Paginated list of users and pagination metadata.
+        BaseResponse[dict]: Paginated list of users and pagination metadata.
 
     Example:
         >>> # GET /api/v1/admin/users?page=1&limit=20
@@ -123,7 +123,7 @@ async def list_users(
     users, meta = await UsersService.get_admin_users(
         db, page=page, limit=limit, role=role, user_status=user_status, search=search
     )
-    return ResponseWithMeta(success=True, data=users, meta=meta)
+    return BaseResponse(success=True, data={"items": users, "meta": meta})
 
 
 @admin_router.patch("/{user_id}/status", summary="Change user account status (Admin)")

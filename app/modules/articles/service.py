@@ -14,7 +14,7 @@ from app.models.articles import Article, ArticleSentence, ArticleSentenceTerm
 from app.models.categories import Category
 from app.models.enums import AiGenerationStatus, ArticleStatus, CefrLevel, TermOrigin, TermReviewStatus
 from app.models.vocabularies import UserVocabulary
-from app.modules.articles.helpers.cefr_analyzer import CefrAnalyzerHelper
+from app.modules.articles.helpers.cefr_analyzer import CefrAnalyzerHelper, lemmatize_word
 from app.modules.articles.helpers.html_sanitizer import HtmlSanitizerHelper
 from app.modules.articles.helpers.sentence_parser import SentenceParserHelper
 from app.modules.articles.helpers.term_marker import TermMarkerHelper
@@ -62,7 +62,7 @@ class ArticlesService:
         page: int = 1,
         limit: int = 20,
         q: str | None = None,
-        category_id: uuid.UUID | None = None,
+        category_slug: str | None = None,
         cefr_level: CefrLevel | None = None,
         sort: str = "newest",
     ) -> tuple[list[PublicArticleCardDto], dict]:
@@ -73,7 +73,7 @@ class ArticlesService:
             page (int, optional): 1-indexed page number. Defaults to 1.
             limit (int, optional): Items per page limit. Defaults to 20.
             q (str | None, optional): Search query on article title. Defaults to None.
-            category_id (uuid.UUID | None, optional): Category identifier filter. Defaults to None.
+            category_slug (str | None, optional): Category slug filter. Defaults to None.
             cefr_level (CefrLevel | None, optional): Target CEFR difficulty level filter. Defaults to None.
             sort (str, optional): Sort order ('newest' or 'oldest'). Defaults to 'newest'.
 
@@ -86,9 +86,9 @@ class ArticlesService:
         stmt = select(Article).options(selectinload(Article.category)).where(Article.status == ArticleStatus.PUBLISHED)
         count_stmt = select(func.count()).select_from(Article).where(Article.status == ArticleStatus.PUBLISHED)
 
-        if category_id:
-            stmt = stmt.where(Article.category_id == category_id)
-            count_stmt = count_stmt.where(Article.category_id == category_id)
+        if category_slug:
+            stmt = stmt.join(Article.category).where(Category.slug == category_slug)
+            count_stmt = count_stmt.join(Article.category).where(Category.slug == category_slug)
 
         if cefr_level:
             stmt = stmt.where(Article.cefr_level == cefr_level)
@@ -575,11 +575,11 @@ class ArticlesService:
                             id=t_id,
                             sentence_id=s.id,
                             value=word,
-                            lemma=word.lower(),
+                            lemma=lemmatize_word(word),
                             cefr_level=lvl,
                             origin=TermOrigin.NLP,
                             review_status=TermReviewStatus.APPROVED,
-                            explanation_status=AiGenerationStatus.READY,
+                            explanation_status=AiGenerationStatus.PENDING,
                             is_lookup_enabled=True,
                             is_active=True,
                         )
