@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "fastapi": {
+      "source": "fastapi/fastapi",
+      "sourceType": "github",
+      "skillPath": "fastapi/.agents/skills/fastapi/SKILL.md",
+      "computedHash": "187b2e06c41cdb6c6beeab15e6db4aeb1bf62f57735974646ad5646af8aacc66"
+    },
+    "google-python-docstrings": {
+      "source": "martanto/skills",
+      "sourceType": "github",
+      "skillPath": "skills/google-python-docstrings/SKILL.md",
+      "computedHash": "bc937531ec81eccf475d87693b35b3f7a4b7d039be81c4c2c3e55efe446eb520"
+    },
+    "python-fastapi-patterns": {
+      "source": "autohandai/community-skills",
+      "sourceType": "github",
+      "skillPath": "python-fastapi-patterns/SKILL.md",
+      "computedHash": "d249c109c77d920c1515cfce03367dc4df7b4839af8ed0ba423ca6b018d64982"
+    }
+  }
+}
