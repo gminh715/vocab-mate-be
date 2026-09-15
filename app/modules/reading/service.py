@@ -8,7 +8,7 @@ from decimal import Decimal
 from typing import Any
 
 from fastapi import HTTPException, status
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -525,20 +525,30 @@ class ReadingService:
                 detail="Contextual lookup is disabled for this term",
             )
 
-        # Lazy AI Enrichment if not READY
+        # Lazy AI Enrichment if not READY or if explanation fields are missing
+        is_term_ready = (
+            term.explanation_status == AiGenerationStatus.READY
+            and term.contextual_meaning_vi is not None
+            and term.part_of_speech is not None
+        )
+
         if term.explanation_status == AiGenerationStatus.PROCESSING:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Contextual term enrichment is already processing; retry later",
             )
 
-        if term.explanation_status != AiGenerationStatus.READY:
+        if not is_term_ready:
             # Atomically claim enrichment rights
             claim_stmt = (
                 update(ArticleSentenceTerm)
                 .where(
                     ArticleSentenceTerm.id == term_id,
-                    ArticleSentenceTerm.explanation_status.in_([AiGenerationStatus.PENDING, AiGenerationStatus.FAILED]),
+                    or_(
+                        ArticleSentenceTerm.explanation_status.in_([AiGenerationStatus.PENDING, AiGenerationStatus.FAILED]),
+                        ArticleSentenceTerm.contextual_meaning_vi.is_(None),
+                        ArticleSentenceTerm.part_of_speech.is_(None),
+                    ),
                 )
                 .values(explanation_status=AiGenerationStatus.PROCESSING)
             )
@@ -548,7 +558,11 @@ class ReadingService:
             if claim_res.rowcount == 0:
                 # Re-query term: another worker claimed or finished
                 re_term = await db.scalar(select(ArticleSentenceTerm).where(ArticleSentenceTerm.id == term_id))
-                if re_term and re_term.explanation_status == AiGenerationStatus.READY:
+                if (
+                    re_term
+                    and re_term.explanation_status == AiGenerationStatus.READY
+                    and re_term.contextual_meaning_vi is not None
+                ):
                     term = re_term
                 else:
                     raise HTTPException(

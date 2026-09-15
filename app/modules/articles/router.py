@@ -48,10 +48,10 @@ async def get_articles(
     page: Annotated[int, Query(ge=1, description="1-indexed page number")] = 1,
     limit: Annotated[int, Query(ge=1, le=100, description="Items per page")] = 20,
     q: Annotated[str | None, Query(description="Search keyword for article title")] = None,
-    category_id: Annotated[uuid.UUID | None, Query(alias="categoryId", description="Filter by category ID")] = None,
+    category_slug: Annotated[str | None, Query(alias="categorySlug", description="Filter by category slug")] = None,
     cefr_level: Annotated[CefrLevel | None, Query(alias="cefrLevel", description="Filter by CEFR level")] = None,
     sort: Annotated[str, Query(pattern="^(newest|oldest)$", description="Sort order")] = "newest",
-) -> ResponseWithMeta[dict[str, list[PublicArticleCardDto]], dict]:
+) -> BaseResponse[dict]:
     """Retrieves paginated catalog of published articles matching specified criteria.
 
     Args:
@@ -59,20 +59,20 @@ async def get_articles(
         page (int, optional): Page number. Defaults to 1.
         limit (int, optional): Items per page. Defaults to 20.
         q (str | None, optional): Search keyword. Defaults to None.
-        category_id (uuid.UUID | None, optional): Category filter. Defaults to None.
+        category_slug (str | None, optional): Category slug filter. Defaults to None.
         cefr_level (CefrLevel | None, optional): CEFR difficulty filter. Defaults to None.
         sort (str, optional): Ordering direction ("newest" or "oldest"). Defaults to "newest".
 
     Returns:
-        ResponseWithMeta[dict[str, list[PublicArticleCardDto]], dict]: Enclosing article cards and pagination metadata.
+        BaseResponse[dict]: Enclosing article cards and pagination metadata.
 
     Example:
         >>> # GET /api/v1/articles?page=1&limit=20&sort=newest
     """
     items, meta = await ArticlesService.find_all_published(
-        db, page=page, limit=limit, q=q, category_id=category_id, cefr_level=cefr_level, sort=sort
+        db, page=page, limit=limit, q=q, category_slug=category_slug, cefr_level=cefr_level, sort=sort
     )
-    return ResponseWithMeta(success=True, data={"items": items}, meta=meta)
+    return BaseResponse(success=True, data={"items": items, "meta": meta})
 
 
 @router.get("/{slug}", summary="Get published article metadata")
@@ -114,7 +114,7 @@ async def list_admin_articles(
         ArticleStatus | None, Query(alias="status", description="Filter by editorial status")
     ] = None,
     sort: Annotated[str, Query(pattern="^(newest|oldest)$", description="Sort order")] = "newest",
-) -> ResponseWithMeta[dict[str, list[AdminArticleListItemDto]], dict]:
+) -> BaseResponse[dict]:
     """Retrieves paginated directory of articles across draft, published, and archived states.
 
     Args:
@@ -129,7 +129,7 @@ async def list_admin_articles(
         sort (str, optional): Sorting direction. Defaults to "newest".
 
     Returns:
-        ResponseWithMeta[dict[str, list[AdminArticleListItemDto]], dict]: Paginated administrative items with metadata.
+        BaseResponse[dict]: Paginated administrative items with metadata.
 
     Example:
         >>> # GET /api/v1/admin/articles?page=1&limit=20&status=DRAFT
@@ -144,7 +144,7 @@ async def list_admin_articles(
         article_status=article_status,
         sort=sort,
     )
-    return ResponseWithMeta(success=True, data={"items": items}, meta=meta)
+    return BaseResponse(success=True, data={"items": items, "meta": meta})
 
 
 @admin_router.get("/{article_id}", summary="Get article administration detail (Admin)")
