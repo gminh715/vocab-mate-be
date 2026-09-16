@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     BCRYPT_ROUNDS: int = 12
 
     # CORS & Cookies
-    CORS_ORIGIN: str = "http://localhost:5173,http://localhost:3000,https://vocab-mate.onrender.com"
+    CORS_ORIGIN: str = "http://localhost:5173,http://localhost:3000,https://vocabmate.onrender.com"
     COOKIE_SECURE: bool = False
     COOKIE_SAME_SITE: str = "lax"  # "lax", "strict", or "none"
 
@@ -60,7 +60,7 @@ class Settings(BaseSettings):
 
     # AI Service Settings
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_MODEL: str = "gemini-3.5-flash-lite"
     GROQ_API_KEY: str = ""
     GROQ_MODEL: str = "openai/gpt-oss-20b"
     AI_REQUEST_TIMEOUT_MS: int = 30000
