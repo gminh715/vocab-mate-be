@@ -1,0 +1,50 @@
+services:
+  # FastAPI Python Backend (Connected directly to Supabase)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vocab-mate-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - PORT=3000
+      - HOST=0.0.0.0
+      - ENVIRONMENT=production
+      - DATABASE_URL=${DATABASE_URL}
+      - DIRECT_URL=${DIRECT_URL}
+      - CORS_ORIGIN=http://localhost:5173,http://localhost:3000,http://localhost:80,http://localhost,https://vocabmate.onrender.com
+      - COOKIE_SECURE=false
+      - COOKIE_SAME_SITE=lax
+      - UVICORN_WORKERS=2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - vocab-network
+
+  # React Frontend (Nginx SPA + Reverse Proxy)
+  frontend:
+    build:
+      context: ../vocab-mate-frontend-python
+      dockerfile: Dockerfile
+    container_name: vocab-mate-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - vocab-network
+
+networks:
+  vocab-network:
+    driver: bridge

@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     BCRYPT_ROUNDS: int = 12
 
     # CORS & Cookies
-    CORS_ORIGIN: str = "http://localhost:5173,http://localhost:3000,https://vocab-mate.onrender.com"
+    CORS_ORIGIN: str = "http://localhost:5173,http://localhost:3000,https://vocabmate.onrender.com"
     COOKIE_SECURE: bool = False
     COOKIE_SAME_SITE: str = "lax"  # "lax", "strict", or "none"
 
